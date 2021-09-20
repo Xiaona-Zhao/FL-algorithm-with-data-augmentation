@@ -10,33 +10,36 @@ import torchvision.utils as vutils
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 from Data_generation.Module import FC_Generator, FC_Discriminator, DCGAN_Gen, DCGAN_Disc, DCGAN_Gen_Single_Path, \
-    initialize_weights
+    initialize_weights, MPI_D, MPI_G, MPI_G_single_path
 from Data_generation.Create_dataset import FL_dataset
 
 data_root = '../dataset/CIFAR10'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
+print(f'device = {device}')
+
 
 # some hyper_parameters
-data_name = 'cifar10'
+# data_name = 'cifar10'
+data_name = 'mnist'
 Learning_rate = 2e-4
 
 
-Channels_Num = 3
+Channels_Num = 1
 Channel_Noise = 100
 Batch_size = 100
-frac = 1
-non_iid_alpha = 0.01
+frac = 0.1
+non_iid_alpha = 100
 
 Image_size = 64
-Num_epochs = 101
+Num_epochs = 51
 optimizer_type = 'Adam'
 
-num_users = 10
-Generator_paths = 10
-num_discriminator = 10
-classifier_parameter = 1
+num_users = 100
+Generator_paths = 5
+num_discriminator = 100
+classifier_parameter = 0
 
 
 # 定义transform模块
@@ -47,7 +50,8 @@ def Data_transform(data_name):
                                         transforms.Normalize([0.5 for _ in range(Channels_Num)],
                                                              [0.5 for _ in range(Channels_Num)])])
     elif data_name == 'mnist':
-        Transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+        Transform = transforms.Compose([transforms.Resize(Image_size), transforms.ToTensor(),
+                                        transforms.Normalize((0.5,), (0.5,))])
     return Transform
 
 
@@ -97,7 +101,7 @@ def get_dataset(data_name, data_type):
 
 
 # 调用get_dataset
-train_dataset, test_dataset, train_loader, test_loader, user_groups = get_dataset(data_name='cifar10', data_type='FL_mode')
+train_dataset, test_dataset, train_loader, test_loader, user_groups = get_dataset(data_name=data_name, data_type='FL_mode')
 # train_dataset, test_dataset, train_loader, test_loader, user_groups = get_dataset(data_name='cifar10',
 #                                                                                   data_type='origin')
 
@@ -108,10 +112,14 @@ def net(GAN_type, Generator_paths, num_discriminator):
     if GAN_type == 'DCGAN':
         net_G = DCGAN_Gen(noise_dim=Channel_Noise, channels_num=Channels_Num, feature_gen=8, G_paths=Generator_paths)
         net_G_single_path = DCGAN_Gen(noise_dim=Channel_Noise, channels_num=Channels_Num, feature_gen=8, G_paths=1)
-        net_D = DCGAN_Disc(channels_num=Channels_Num, feature_disc=8)
+        net_D = DCGAN_Disc(channels_num=Channels_Num, feature_disc=8, G_paths=Generator_paths)
         initialize_weights(net_G)
         initialize_weights(net_G_single_path)
         initialize_weights(net_D)
+    elif GAN_type == 'MPI_GAN':
+        net_G = MPI_G(noise_dim=Channel_Noise, G_paths=Generator_paths)
+        net_G_single_path = MPI_G_single_path(noise_dim=Channel_Noise, channels_num=Channels_Num, G_paths=1)
+        net_D = MPI_D(channels_num=Channels_Num, G_paths=Generator_paths)
     else:
         print('GAN_type undefined')
 
@@ -125,8 +133,10 @@ def net(GAN_type, Generator_paths, num_discriminator):
     return Generator, Generator_single_path, Discriminator_list
 
 
-Generator, Generator_single_path, Discriminator_list = net(GAN_type='DCGAN', Generator_paths=Generator_paths,
+Generator, Generator_single_path, Discriminator_list = net(GAN_type='MPI_GAN', Generator_paths=Generator_paths,
                                                            num_discriminator=num_discriminator)
+
+
 
 
 def optimizer(Generator, Discriminator_list, Generator_paths, num_discriminator, optimizer_type):
@@ -174,7 +184,7 @@ def Disc_train(Generator, Discriminator, real, noise, loss_disc_total):
     loss_disc_fake_total = 0
     for i in range(Generator_paths):
         # 计算输入为fake的DISC_loss
-        fake = Generator.paths[i](noise)  # fake.shape = [128, 3, 64, 64]
+        fake = Generator.paths[i](noise) # fake.shape = [128, 3, 64, 64]
         Discriminator_fake, classifier_f = Discriminator(fake.detach())
 
         Discriminator_fake = Discriminator_fake.reshape(-1)  # Discriminator_fake.shape = [128]
@@ -224,10 +234,7 @@ def client_train_loader(idx, user_groups):
     return train_loader
 
 
-
-
-
-def training():
+def multi_disc_training():
     Generator.train()
     Generator_single_path.train()
     for Discriminator in Discriminator_list:
@@ -235,12 +242,13 @@ def training():
 
     for epoch in range(Num_epochs):
         m = max(int(frac * num_users), 1)
-        idxs_users = np.random.choice(range(num_users), m, replace=False)  # idxs_users = [9 8 1 3 0 4 5 2 6 7]
+        idxs_users = np.random.choice(range(num_users), m, replace=False)# idxs_users = [57  3 13 84 59 26 63  0 88 78]
         for idx in idxs_users:
-            assert len(idxs_users) == num_discriminator
+            assert num_users == num_discriminator
 
             # define train loader for each client, and training in coresponding Discriminator
             train_loader = client_train_loader(idx=idx, user_groups=user_groups)
+            print(f'Training on the private data of client {idx}, using DISC {idx}')
 
             for batch_idx, (real, _) in enumerate(train_loader):
                 # print(f'batch number = {batch_idx} in range {len(train_loader)}')
@@ -265,31 +273,75 @@ def training():
                     loss_gen_total.backward()
                     opt_gen[path].step()
 
-                if batch_idx % 10 == 0:
+                if batch_idx % 1 == 0:
                     print(
-                        f"Client [{idx}/{len(idxs_users)}] Epoch [{epoch}/{Num_epochs}] Batch {batch_idx}/{len(train_loader)} \
+                        f"Client [{idx}/{num_users}] Epoch [{epoch}/{Num_epochs}] Batch {batch_idx}/{len(train_loader)} \
                         Loss D: {loss_disc:.4f}, loss G: {loss_gen_total:.4f}")
                     vutils.save_image(real, '%s/real_samples.png' % './results', normalize=True)
-        if epoch % 10 == 0:
-            noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1).to(device)
-            fake_1 = Generator.paths[0](noise_test).reshape(-1, 3, 64, 64)
-            fake_3 = Generator.paths[2](noise_test).reshape(-1, 3, 64, 64)
-            fake_5 = Generator.paths[4](noise_test).reshape(-1, 3, 64, 64)
-            fake_7 = Generator.paths[6](noise_test).reshape(-1, 3, 64, 64)
 
-            vutils.save_image(fake_1.data, '%s/fake_1_samples_epoch_%03d.png' % ('./results', epoch),
-                              normalize=True)
-            vutils.save_image(fake_3.data, '%s/fake_3_samples_epoch_%03d.png' % ('./results', epoch),
-                                normalize=True)
-            vutils.save_image(fake_5.data, '%s/fake_5_samples_epoch_%03d.png' % ('./results', epoch),
-                              normalize=True)
-            vutils.save_image(fake_7.data, '%s/fake_7_samples_epoch_%03d.png' % ('./results', epoch),
-                              normalize=True)
+        if epoch % 2 == 0:
+            if Generator_paths == 1:
+                noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1).to(device)
+                fake_1 = Generator.paths[0](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                vutils.save_image(fake_1.data, '%s/fake_1_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+            elif Generator_paths == 5:
+                noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1).to(device)
+                fake_1 = Generator.paths[0](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_2 = Generator.paths[1](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_3 = Generator.paths[2](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_4 = Generator.paths[3](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_5 = Generator.paths[4](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+
+                vutils.save_image(fake_1.data, '%s/fake_1_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_2.data, '%s/fake_2_samples_epoch_%03d.png' % ('./results', epoch),
+                                    normalize=True)
+                vutils.save_image(fake_3.data, '%s/fake_3_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_4.data, '%s/fake_4_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_5.data, '%s/fake_5_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+            elif Generator_paths == 10:
+                noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1).to(device)
+                fake_1 = Generator.paths[0](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_2 = Generator.paths[1](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_3 = Generator.paths[2](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_4 = Generator.paths[3](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_5 = Generator.paths[4](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_6 = Generator.paths[5](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_7 = Generator.paths[6](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_8 = Generator.paths[7](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_9 = Generator.paths[8](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+                fake_10 = Generator.paths[9](noise_test).reshape(-1, Channels_Num, Image_size, Image_size)
+
+                vutils.save_image(fake_1.data, '%s/fake_1_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_2.data, '%s/fake_2_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_3.data, '%s/fake_3_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_4.data, '%s/fake_4_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_5.data, '%s/fake_5_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_6.data, '%s/fake_6_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_7.data, '%s/fake_7_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_8.data, '%s/fake_8_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_9.data, '%s/fake_9_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
+                vutils.save_image(fake_10.data, '%s/fake_10_samples_epoch_%03d.png' % ('./results', epoch),
+                                  normalize=True)
 
 
-training()
 
+multi_disc_training()
 
+# print(Generator_single_path)
 def single_generator_training():
     # train_dataset, test_dataset, train_loader, test_loader, user_groups = get_dataset(data_name='cifar10',
     #                                                                                   data_type='origin')
@@ -341,7 +393,9 @@ def single_generator_training():
 
         # visualize the generated graph every 5 epoch
         if epoch % 5 == 0:
-            noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1)
+            noise_test = torch.randn(Batch_size, Channel_Noise, 1, 1).to(device)
             fake = Generator_single_path(noise_test).reshape(-1, 3, 64, 64)
             vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d.png' % ('./results', epoch),
                               normalize=True)
+
+# single_generator_training()
