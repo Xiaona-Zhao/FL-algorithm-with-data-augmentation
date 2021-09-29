@@ -269,6 +269,67 @@ class LocalUpdate(object):
 
         accuracy = correct / total
         return accuracy, loss
+    
+    
+    
+class LocalUpdate_Aug(object):
+    def __init__(self, args, train_loader, test_loader, logger):
+        self.args = args
+        self.logger = logger
+        self.trainloader, self.testloader = train_loader, test_loader
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.criterion = nn.NLLLoss().to(self.device)
+
+    def update_weights(self, model, global_round, beta):
+        model.train()
+        epoch_loss = []
+        local_loss = []
+
+        if self.args.optimizer == 'sgd':
+            optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr, momentum=self.args.momentum)
+        elif self.args.optimizer == 'adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+
+        for iter in range(self.args.local_epoch):
+            batch_loss = []
+            for batch_idx, (images, labels) in enumerate(self.trainloader):
+                images, labels = images.to(self.device), labels.to(self.device)
+
+                model.zero_grad()
+                log_probs = model(images)
+                loss = self.criterion(log_probs, labels)
+                loss.backward()
+                optimizer.step()
+
+                if self.args.verbose and (batch_idx % 10 == 0) and beta == True:
+                    print('| Global Round : {} | Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                        global_round + 1, iter, batch_idx * len(images), len(self.trainloader.dataset), 100. * batch_idx / len(self.trainloader), loss.item()))
+                    local_loss.append(loss.item())
+                self.logger.add_scalar('loss', loss.item())
+                batch_loss.append(loss.item())
+            epoch_loss.append(sum(batch_loss) / len(batch_loss))
+
+            return model.state_dict(), sum(epoch_loss) / len(epoch_loss), local_loss
+
+    def inference(self, model):
+        model.eval()
+        loss, total, correct = 0.0, 0.0, 0.0
+
+        for batch_idx, (images, labels) in enumerate(self.testloader):
+            images, labels = images.to(self.device), labels.to(self.device)
+
+            outputs = model(images)
+            batch_loss = self.criterion(outputs, labels)
+            loss += batch_loss.item()
+
+            _, pred_labels = torch.max(outputs, 1)
+            pred_labels = pred_labels.view(-1)
+            correct += torch.sum(torch.eq(pred_labels, labels)).item()
+            total += len(labels)
+
+        accuracy = correct / total
+        return accuracy, loss
+
 
 
 def test_inference(model, test_dataset):
