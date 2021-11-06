@@ -216,3 +216,25 @@ def demo():
 
 
 # demo()
+
+
+
+
+class MPI_G_mnist(nn.Module):
+    def __init__(self, noise_dim, G_paths):
+        super(MPI_G_mnist, self).__init__()
+        modules = nn.ModuleList()
+        for _ in range(G_paths):
+            modules.append(nn.Sequential(nn.ConvTranspose2d(noise_dim, 512, 4, 1, 0, bias = False),nn.BatchNorm2d(512), nn.ReLU(True),
+                                         nn.ConvTranspose2d(512, 256, 4, 2, 1, bias = False),nn.BatchNorm2d(256), nn.ReLU(True),
+                                         nn.ConvTranspose2d(256, 128, 4, 2, 1, bias = False),nn.BatchNorm2d(128), nn.ReLU(True),
+                                         nn.ConvTranspose2d(128, 64, 4, 2, 1, bias = False),nn.BatchNorm2d(64), nn.ReLU(True),
+                                         nn.ConvTranspose2d(64, 1, 4, 2, 1, bias = False),nn.Tanh()))
+        self.paths = modules
+
+    def forward(self, x):
+        img = []
+        for path in self.paths:
+            img.append(path(x))
+        img = torch.cat(img, dim=0)
+        return img
