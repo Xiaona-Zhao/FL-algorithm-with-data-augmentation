@@ -1,0 +1,138 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+def single_client_iid():
+    iid_1 = [2.305175304412842, 0.6095489263534546, 0.6364735960960388, 0.5938302278518677, 0.6054720878601074]
+
+    iid_51 =[0.17674778401851654, 0.37916916608810425, 0.23473718762397766, 0.2058197408914566, 0.22712454199790955]
+
+    iid_101 =[0.37263429164886475, 0.2980842888355255, 0.44048142433166504, 0.26298683881759644, 0.27256056666374207]
+
+    iid_151 =[0.42562443017959595, 0.3107966184616089, 0.16595974564552307, 0.4234161078929901, 0.257686585187912]
+
+    iid_199 =[0.18599048256874084, 0.5811724066734314, 0.22759424149990082, 0.5304675102233887, 0.6196914315223694]
+
+
+    fig = plt.figure(num=1, figsize=(12, 8))
+    ax = Axes3D(fig)
+    _x = np.arange(0, 5, 1)
+    _y = np.arange(0, 4, 1)
+    ax.scatter3D(xs=_x, ys=1, zs=iid_1, color='red', label='Global_round_0', depthshade=False)
+    ax.scatter3D(xs=_x, ys=2, zs=iid_51, color='darkorange', label='Global_round_50', depthshade=False)
+    ax.scatter3D(xs=_x, ys=3, zs=iid_101, color='lightgreen', label='Global_round_100', depthshade=False)
+    ax.scatter3D(xs=_x, ys=4, zs=iid_151, color='skyblue', label='Global_round_150', depthshade=False)
+    ax.scatter3D(xs=_x, ys=5, zs=iid_199, color='darkviolet', label='Global_round_200', depthshade=False)
+    ax.set_xlim([0, 5])
+    ax.set_ylim([0, 1.05])
+    ax.set_zlim([-0.1, 2.75])
+    ax.set_xticks(np.linspace(0, 5, 6))
+    ax.set_yticks(np.linspace(0, 5, 6))
+    ax.set_xlabel('Local training epoch')
+    ax.set_ylabel('Global round')
+    ax.set_zlabel('Training Loss')
+
+    ax.set_yticklabels(
+        ['0', "Round_0", "Round_50", "Round_100", "Round_150", "Round_200"],
+        rotation=20, fontsize=6)
+    ax.set_title('Client loss value in local training')
+    plt.legend()
+    # plt.savefig('Training loss for single client in non_iid_alpha = 1.png')
+    # plt.close()
+    plt.show()
+
+
+def single_client_noniid():
+    iid_1 =[2.1414358615875244, 0.31931161880493164, 0.10666503757238388, 0.11341243982315063, 0.022560304030776024]
+    iid_51 =[2.3656296730041504, 0.0020848005078732967, 0.0015874714590609074, 3.0278931717475643e-07, 3.099440348819371e-08]
+    iid_101 =[1.3273807764053345, 0.0013924359809607267, 0.015066376887261868, 0.04414409026503563, 0.0013694741064682603]
+
+    iid_151 =[2.333219051361084, 0.004457185044884682, 1.1734474355762359e-05, 0.004080114886164665, 4.76837103136063e-09]
+
+    iid_199 =[2.26969051361084, 2.072601819236297e-05, 1.7881352221138513e-07, 0.006333439145237207, 2.38418573772492e-09]
+
+
+    fig = plt.figure(num=1, figsize=(12, 8))
+    ax = Axes3D(fig)
+    _x = np.arange(0, 5, 1)
+    _y = np.arange(0, 4, 1)
+    ax.scatter3D(xs=_x, ys=1, zs=iid_1, color='red', label='Global_round_0', depthshade=False)
+    ax.scatter3D(xs=_x, ys=2, zs=iid_51, color='darkorange', label='Global_round_50', depthshade=False)
+    ax.scatter3D(xs=_x, ys=3, zs=iid_101, color='lightgreen', label='Global_round_100', depthshade=False)
+    ax.scatter3D(xs=_x, ys=4, zs=iid_151, color='skyblue', label='Global_round_150', depthshade=False)
+    ax.scatter3D(xs=_x, ys=5, zs=iid_199, color='darkviolet', label='Global_round_200', depthshade=False)
+    ax.set_xlim([0, 5])
+    ax.set_ylim([0, 1.05])
+    ax.set_zlim([-0.1, 2.75])
+    ax.set_xticks(np.linspace(0, 5, 6))
+    ax.set_yticks(np.linspace(0, 5, 6))
+    ax.set_xlabel('Local training epoch')
+    ax.set_ylabel('Global round')
+    ax.set_zlabel('Training Loss')
+
+    ax.set_yticklabels(
+        ['0', "Round_0", "Round_50", "Round_100", "Round_150", "Round_200"],
+        rotation=20, fontsize=6)
+    ax.set_title('Client loss value in non_iid local training')
+    plt.legend()
+    # plt.savefig('Training loss for single client in non_iid_alpha = 1.png')
+    # plt.close()
+    plt.show()
+
+
+def dynamic():
+    iid_1 =[2.311361789703369, 0.04037937521934509, 0.11162465065717697, 0.0011118375696241856, 0.02719908207654953]
+
+    iid_20 = [1.8649441003799438, 0.016411660239100456, 0.0015969148371368647, 0.009309432469308376, 0.2845403552055359]
+
+    iid_40 = [1.8459441661834717, 0.0836743414402008, 0.00034118207986466587, 0.0005026250146329403, 0.0006110462709330022]
+
+    iid_60 = [1.7652400732040405, 2.4339151423191652e-05, 9.1313717121011e-07, 0.008386415429413319, 0.00041987738222815096]
+
+    iid_80 =[1.2670586109161377, 0.044235166162252426, 0.10621868073940277, 0.0004177083319518715, 0.032730262726545334]
+    iid_100 =[1.2464278936386108,  0.019095150753855705,  0.0825766921043396,  0.09099773317575455,  0.010299630463123322]
+
+
+    iid_120 =[0.8848924040794373, 0.2749195396900177, 0.1474970579147339, 0.14460346102714539,  0.11552440375089645]
+    iid_140 =[0.6272759437561035, 0.23504003882408142, 0.17896537482738495, 0.1278923898935318, 0.08612772822380066]
+
+    iid_160 =[0.5264660120010376, 0.1229739561676979, 0.16824188828468323, 0.06546866148710251, 0.1408424973487854]
+    iid_180 =[0.6465584635734558, 0.0989934429526329, 0.14708523452281952, 0.10986886918544769, 0.12608598172664642]
+    iid_200 =[0.4105885326862335, 0.2074642926454544, 0.3130926489830017, 0.10250381380319595,  0.11494805663824081]
+
+
+
+    fig = plt.figure(num=1, figsize=(12, 8))
+    ax = Axes3D(fig)
+    _x = np.arange(0, 5, 1)
+    _y = np.arange(0, 4, 1)
+    ax.scatter3D(xs=_x, ys=1, zs=iid_1, color='red', depthshade=False)
+    ax.scatter3D(xs=_x, ys=2, zs=iid_20, color='tomato', depthshade=False)
+    ax.scatter3D(xs=_x, ys=3, zs=iid_40, color='orange', depthshade=False)
+    ax.scatter3D(xs=_x, ys=4, zs=iid_60, color='darkorange', depthshade=False)
+    ax.scatter3D(xs=_x, ys=5, zs=iid_80, color='goldenrod', depthshade=False)
+    ax.scatter3D(xs=_x, ys=6, zs=iid_100, color='olive', depthshade=False)
+    ax.scatter3D(xs=_x, ys=7, zs=iid_120, color='lightgreen', depthshade=False)
+    ax.scatter3D(xs=_x, ys=8, zs=iid_140, color='cyan', depthshade=False)
+    ax.scatter3D(xs=_x, ys=9, zs=iid_160, color='royalblue', depthshade=False)
+    ax.scatter3D(xs=_x, ys=10, zs=iid_180, color='darkviolet',  depthshade=False)
+    ax.scatter3D(xs=_x, ys=11, zs=iid_200, color='indigo', depthshade=False)
+    ax.set_xlim([0, 5])
+    ax.set_ylim([0, 12.05])
+    ax.set_zlim([-0.1, 2.75])
+    ax.set_xticks(np.linspace(0, 5, 6))
+    ax.set_yticks(np.linspace(0, 12, 12))
+    ax.set_xlabel('Local training epoch')
+    ax.set_ylabel('Global round')
+    ax.set_zlabel('Training Loss')
+
+    ax.set_yticklabels(
+        [' ', "0", "20", "40", "60", "80", "100", "120", "140", "160", "180", "200"],
+        rotation=20, fontsize=6)
+    ax.set_title('Client loss value in non_iid local training')
+    plt.legend()
+    # plt.savefig('Training loss for single client in non_iid_alpha = 1.png')
+    # plt.close()
+    plt.show()
+
+
+dynamic()
