@@ -6,7 +6,7 @@ This repository shows the pytorch code for Dissertation Report in applying MSc i
 
 PDF.file will be uploaded after defence.
 
-Welcome to make contact with author: 20074559g@connect.polyu.hk :smiley:
+Welcome to make contact with author: xiaona.zhao@connect.polyu.hk :smiley:
 
 
 ## Abstract 
