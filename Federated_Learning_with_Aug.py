@@ -167,7 +167,7 @@ def args_parser():
     parser.add_argument('--Gan_type', type=str, default='mnist_GAN',
                         help="select model for Multi_GAN training: mnist_GAN, cifar10_GAN of DCGAN")
     parser.add_argument('--Gan_lr', type=int, default=2e-4, help="Learning rate for Multi_GAN training")
-    parser.add_argument('--Gan_epochs', type=int, default=1, help="Number of epochs for Multi_GAN training")
+    parser.add_argument('--Gan_epochs', type=int, default=50, help="Number of epochs for Multi_GAN training")
     parser.add_argument('--Generator_paths', type=int, default=4, help="Generator_paths for multi_path generator")
     parser.add_argument('--num_discriminator', type=int, default=100,
                         help="Number of discriminators, should be corresponding to the number of clients")
