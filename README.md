@@ -1,16 +1,49 @@
-
-# Federated Learning with Generative Adversarial Network to Improve Training on Non-i.i.d Data
-
-This repository shows the pytorch code for Dissertation Report in applying MSc in Information Technology, The Hong Kong Polytechnic University.
+## Federated Learning with Generative Adversarial Network to Improve Training on Non-i.i.d Data.
 
 
-PDF.file will be uploaded after defence.
+This is the code accompanying the Dissertation Project.  
+The dissertation report is for application of M.Sc. in Information Technology, The Hong Kong Polytechnic University.
 
-Welcome to make contact with author: xiaona.zhao@connect.polyu.hk :smiley:
+#### Requirements to run the code:
+---
+
+1. Python 3.7
+2. PyTorch 1.0.2
+3. Scikit-learn
+4. Matplotlib
+5. Numpy
 
 
-## Abstract 
-  Federated Learning has been a novel privacy-preserved distributed Machine Learning framework since it was proposed in 2017. However, statistical heterogeneity between client’s local data may decrease global model performance of even make federated learning algorithm non convergence at model parameter aggregation section. This work focus on migrating the impact of non_iid data have on FedAvg algorithm, using simulation data generated from Multi_GAN for data augmentation. Considering privacy guarantee of federated learning, the discriminators will be trained based on local dataset so that raw data exchange is prohibited between clients and server. Non_iid assumption is the major reason of the data distribution drift between clients, and a multi_path generator is implemented on server side to cover multimodel distribution of discriminators in GAN training. 
-  
-  To perform a quantitative analysis on the influence of non_iid data have on model performance in federated learning algorithm, Dirichlet distribution function is implemented in data preprocess step with a tunable parameter non_iid_alpha in chapter 2. Experiments on synthesize dataset shows ideal performance of multi_path generator on multimodel distributed training dataset, and a visualization of the generated images from multi_path generator GAN in non_iid dataset is shown in chapter 3. Chapter 4 provide the global model performance evaluation, showing the improvement of classification accuracy on full batch gradient descent algorithm from 0.54 to 0.90, as well as in FedAvg algorithm which test accuracy increase from 0.48 to 0.86. A convergence analysis on local training epoch of a specific client is also given, which can be another insight evidence on the performance improvement of GAN based data augmentation to federated learning under non_iid assumption.
+#### Important source files:
+---
 
+1. `FedAVG.py`: Implement of the original Federated Average algorithm, which is used as the baseline.
+2. `Federated_Learning_with_Aug.py`: Implement of the FL algorithm with GAN based data augmentation, which is the main function of the project.
+
+
+#### Important arguments:
+---
+
+
+The following arguments to the FedAvg_training.py file control the important parameters of the experiment
+
+1. `FL_epochs`: Defines the number of federated learning training epoch.
+2. `Gan_epochs`: Defines the number of Multi_GAN training epoch.
+3. `Generator_paths`: Number of the path in Generator of the GAN, set to be '4' as a better performance.
+4. `non_iid_alpha`: Set for data partition. Set to be 100 for iid data, and 0.01 for non_iid data, quantitative is also allowed.
+5. `iid`: Set for original partition method 'True' of 'False', when data to be partitioned based on the same way in Federated Average algorithm.
+
+
+#### Output:
+---
+
+The training_loss and test_accuracy is the main output, that can evaluate the model performance.  
+Also, the majority of the information is logged to a log file in the log folder.
+
+
+### Email of the author:
+---
+
+```
+xiaona.zhao@connect.polyu.hk
+```
