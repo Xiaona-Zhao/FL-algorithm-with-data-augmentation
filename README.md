@@ -41,7 +41,7 @@ The training_loss and test_accuracy is the main output, that can evaluate the mo
 Also, the majority of the information is logged to a log file in the log folder.
 
 
-### Email of the author:
+### Make Contact:
 ---
 
 ```
