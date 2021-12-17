@@ -38,7 +38,7 @@ The following arguments to the FedAvg_training.py file control the important par
 ---
 
 The training_loss and test_accuracy is the main output, which can evaluate model performance.  
-Also, the majority of the information is recorded to a log file in the log folder.
+Also, the majority of the information is recorded in the log folder.
 
 
 ### Make Contact:
