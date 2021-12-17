@@ -30,15 +30,15 @@ The following arguments to the FedAvg_training.py file control the important par
 1. `FL_epochs`: Defines the number of federated learning training epoch.
 2. `Gan_epochs`: Defines the number of Multi_GAN training epoch.
 3. `Generator_paths`: Number of the path in Generator of the GAN, set to be '4' as a better performance.
-4. `non_iid_alpha`: Set for data partition. Set to be 100 for iid data, and 0.01 for non_iid data, quantitative is also allowed.
-5. `iid`: Set for original partition method 'True' of 'False', when data to be partitioned based on the same way in Federated Average algorithm.
+4. `non_iid_alpha`: Hyperparemeter for data partition. Set to be 100 for iid data, and 0.01 for non_iid data.
+5. `iid`: Set for original partition method 'True' or 'False', when data to be partitioned based on the same way in Federated Average algorithm.
 
 
 #### Output:
 ---
 
-The training_loss and test_accuracy is the main output, that can evaluate the model performance.  
-Also, the majority of the information is logged to a log file in the log folder.
+The training_loss and test_accuracy is the main output, which can evaluate model performance.  
+Also, the majority of the information is recorded to a log file in the log folder.
 
 
 ### Make Contact:
